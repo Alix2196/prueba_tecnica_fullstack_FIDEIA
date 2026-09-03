@@ -28,4 +28,4 @@ _Un caso propio donde un asistente de IA te ahorró trabajo de verdad, y otro do
 
 _Cómo usaste (o no) Claude en la Parte A: qué le pediste, qué corregiste de lo que te entregó y qué escribiste por tu cuenta._
 
-Se realizo la investigacion y la mejora en la documentacion sobre el sistema de tickets en el cual se implemento el diseño de las Apis, las vistas del frontend y el modelo de datos, se le solicita a la IA que cree la base de datos bajo la documentacion.
+Se realizo la investigacion y la mejora en la documentacion sobre el sistema de tickets en el cual se implemento el diseño de las Apis, las vistas del frontend y el modelo de datos, se le solicita a la IA que cree la base de datos bajo la documentacion, le solicite ayuda para crear la base inicial del backend, se utiliza una base de datos en docker para alojar la persistencia de los datos.

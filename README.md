@@ -33,13 +33,24 @@ Requisitos: JDK 25 y PostgreSQL 14+ corriendo con el esquema de `db/schema.sql` 
 psql -U postgres -c "CREATE DATABASE tickets;"
 psql -U postgres -d tickets -f db/schema.sql
 
-# 2. Configurar variables de entorno (ver backend/.env.example)
+# 2. Levantar la API (por defecto en http://localhost:8080)
 cd backend
-cp .env.example .env   # y ajustar credenciales si aplica
-
-# 3. Levantar la API (por defecto en http://localhost:8080)
 ./mvnw spring-boot:run        # Linux/macOS
 mvnw.cmd spring-boot:run      # Windows
+```
+
+Los valores por defecto (base `tickets`, usuario `tickets`, password `tickets` en `localhost:5432`) alcanzan para levantar el proyecto sin configuración adicional si el paso 1 se hizo con esas credenciales. Para otros valores, Spring Boot lee las variables directamente del entorno del sistema operativo (no hay archivo `.env`: eso no es un mecanismo nativo de Spring Boot/Java). Por ejemplo:
+
+```bash
+# Linux/macOS
+export DB_URL=jdbc:postgresql://localhost:5432/tickets
+export DB_USER=tickets
+export DB_PASSWORD=tickets
+
+# Windows (PowerShell)
+$env:DB_URL = "jdbc:postgresql://localhost:5432/tickets"
+$env:DB_USER = "tickets"
+$env:DB_PASSWORD = "tickets"
 ```
 
 Variables de entorno soportadas (con su valor por defecto): `DB_URL` (`jdbc:postgresql://localhost:5432/tickets`), `DB_USER` (`tickets`), `DB_PASSWORD` (`tickets`), `SERVER_PORT` (`8080`), `APP_CORS_ALLOWED_ORIGINS` (`http://localhost:4200`).
