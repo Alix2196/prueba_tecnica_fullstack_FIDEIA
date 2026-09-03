@@ -1,0 +1,22 @@
+package ai.fideia.tickets.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+/** Habilita CORS para que el frontend Angular (app.cors.allowed-origins) consuma la API. */
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/**")
+                .allowedOrigins(allowedOrigins.split(","))
+                .allowedMethods("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*");
+    }
+}

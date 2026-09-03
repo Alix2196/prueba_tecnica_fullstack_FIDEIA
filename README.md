@@ -24,7 +24,31 @@ README.md   Este archivo
 
 ## 3. Cómo levantar el proyecto
 
-_Pendiente — se documentará aquí el paso a paso (requisitos, variables de entorno, comandos) a medida que el backend, la base de datos y el frontend queden implementados._
+### 3.1 Backend
+
+Requisitos: JDK 25 y PostgreSQL 14+ corriendo con el esquema de `db/schema.sql` aplicado. No hace falta tener Maven instalado: el proyecto incluye Maven Wrapper.
+
+```bash
+# 1. Crear la base de datos y aplicar el esquema
+psql -U postgres -c "CREATE DATABASE tickets;"
+psql -U postgres -d tickets -f db/schema.sql
+
+# 2. Configurar variables de entorno (ver backend/.env.example)
+cd backend
+cp .env.example .env   # y ajustar credenciales si aplica
+
+# 3. Levantar la API (por defecto en http://localhost:8080)
+./mvnw spring-boot:run        # Linux/macOS
+mvnw.cmd spring-boot:run      # Windows
+```
+
+Variables de entorno soportadas (con su valor por defecto): `DB_URL` (`jdbc:postgresql://localhost:5432/tickets`), `DB_USER` (`tickets`), `DB_PASSWORD` (`tickets`), `SERVER_PORT` (`8080`), `APP_CORS_ALLOWED_ORIGINS` (`http://localhost:4200`).
+
+El backend usa `spring.jpa.hibernate.ddl-auto=validate`: nunca modifica el esquema, solo valida al arrancar que las entidades coincidan con `db/schema.sql` (que es la fuente de verdad, ver sección 7).
+
+### 3.2 Frontend
+
+_Pendiente — se documentará una vez implementado el proyecto Angular en `/frontend`._
 
 ## 4. Modelo de dominio
 

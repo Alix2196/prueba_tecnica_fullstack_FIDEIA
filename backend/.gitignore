@@ -1,0 +1,17 @@
+target/
+
+### Editores/IDE ###
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+
+### Logs ###
+*.log
+
+### Variables de entorno ###
+.env
