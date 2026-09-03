@@ -1,0 +1,133 @@
+<a routerLink="/" class="volver">« Volver al listado</a>
+
+@if (cargando()) {
+  <p class="estado-carga">Cargando ticket...</p>
+} @else if (error()) {
+  <div class="estado-error">
+    <span>{{ error() }}</span>
+    <button class="boton" (click)="cargar()">Reintentar</button>
+  </div>
+} @else if (detalle()) {
+  @let d = detalle()!;
+
+  <div class="tarjeta ticket-info">
+    <div class="ticket-info__cabecera">
+      <h1>#{{ d.ticket.id }} — {{ d.ticket.titulo }}</h1>
+      <div class="badges">
+        <span [class]="claseBadgePrioridad(d.ticket.prioridad)">{{ d.ticket.prioridad }}</span>
+        <span [class]="claseBadgeEstado(d.ticket.estado)">{{ d.ticket.estado }}</span>
+      </div>
+    </div>
+    <p class="ticket-info__descripcion">{{ d.ticket.descripcion }}</p>
+    <dl class="ticket-info__meta">
+      <dt>Solicitante</dt>
+      <dd>{{ d.ticket.solicitante.nombre }}</dd>
+      <dt>Agente</dt>
+      <dd>{{ d.ticket.agente?.nombre ?? 'Sin asignar' }}</dd>
+      <dt>Creado</dt>
+      <dd>{{ formatFecha(d.ticket.fechaCreacion) }}</dd>
+      <dt>Actualizado</dt>
+      <dd>{{ formatFecha(d.ticket.fechaActualizacion) }}</dd>
+      @if (d.ticket.fechaResolucion) {
+        <dt>Resuelto</dt>
+        <dd>{{ formatFecha(d.ticket.fechaResolucion) }}</dd>
+      }
+    </dl>
+  </div>
+
+  <section class="tarjeta seccion">
+    <h2>Cambiar estado</h2>
+    @if (transicionesDisponibles().length === 0) {
+      <p class="texto-muted">Este ticket está en un estado terminal o no admite más transiciones.</p>
+    } @else {
+      <div class="transiciones">
+        @for (t of transicionesDisponibles(); track t) {
+          <button
+            class="boton"
+            [class.boton--primario]="estadoObjetivo() === t"
+            (click)="seleccionarTransicion(t)"
+          >
+            {{ t === 'EN_PROCESO' && d.ticket.estado === 'RESUELTO' ? 'Reabrir (a EN_PROCESO)' : 'Pasar a ' + t }}
+          </button>
+        }
+      </div>
+
+      @if (estadoObjetivo()) {
+        <div class="confirmacion-transicion">
+          @if (estadoObjetivo() === 'RESUELTO') {
+            <div class="campo">
+              <label for="comentarioSolucion">Comentario de solución (obligatorio)</label>
+              <textarea id="comentarioSolucion" rows="2" [(ngModel)]="comentarioSolucion"></textarea>
+            </div>
+          }
+          @if (errorCambiarEstado()) {
+            <p class="estado-error">{{ errorCambiarEstado() }}</p>
+          }
+          <button
+            class="boton boton--primario"
+            [disabled]="cambiandoEstado() || (estadoObjetivo() === 'RESUELTO' && !comentarioSolucion().trim())"
+            (click)="confirmarCambioEstado()"
+          >
+            {{ cambiandoEstado() ? 'Aplicando...' : 'Confirmar' }}
+          </button>
+        </div>
+      }
+    }
+  </section>
+
+  <section class="tarjeta seccion">
+    <h2>Comentarios</h2>
+    @if (d.comentarios.length === 0) {
+      <p class="estado-vacio">Todavía no hay comentarios en este ticket.</p>
+    } @else {
+      <ul class="lista-comentarios">
+        @for (c of d.comentarios; track c.id) {
+          <li>
+            <div class="lista-comentarios__cabecera">
+              <strong>{{ c.autor.nombre }}</strong>
+              @if (c.esSolucion) {
+                <span class="badge badge--estado-resuelto">Solución</span>
+              }
+              <span class="texto-muted">{{ formatFecha(c.creadoEn) }}</span>
+            </div>
+            <p>{{ c.texto }}</p>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (d.ticket.estado === 'CERRADO') {
+      <p class="texto-muted">Este ticket está cerrado: no admite comentarios nuevos.</p>
+    } @else {
+      <div class="campo">
+        <label for="nuevoComentario">Agregar comentario</label>
+        <textarea id="nuevoComentario" rows="2" [ngModel]="nuevoComentario()" (ngModelChange)="nuevoComentario.set($event)"></textarea>
+      </div>
+      @if (errorComentario()) {
+        <p class="estado-error">{{ errorComentario() }}</p>
+      }
+      <button
+        class="boton boton--primario"
+        [disabled]="enviandoComentario() || !nuevoComentario().trim()"
+        (click)="enviarComentario()"
+      >
+        {{ enviandoComentario() ? 'Enviando...' : 'Comentar' }}
+      </button>
+    }
+  </section>
+
+  <section class="tarjeta seccion">
+    <h2>Historial de estados</h2>
+    <ul class="lista-historial">
+      @for (h of d.historial; track h.id) {
+        <li>
+          <span [class]="claseBadgeEstado(h.estadoNuevo)">{{ h.estadoNuevo }}</span>
+          <span class="texto-muted">
+            {{ h.estadoAnterior ? ('desde ' + h.estadoAnterior + ' · ') : 'creación · ' }}
+            {{ h.autor.nombre }} · {{ formatFecha(h.creadoEn) }}
+          </span>
+        </li>
+      }
+    </ul>
+  </section>
+}

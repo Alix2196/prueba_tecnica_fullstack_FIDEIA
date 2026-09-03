@@ -1,0 +1,104 @@
+.volver {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.ticket-info {
+  margin-bottom: 1.5rem;
+}
+
+.ticket-info__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ticket-info__cabecera h1 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.badges {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.ticket-info__descripcion {
+  color: var(--color-text-muted);
+  white-space: pre-wrap;
+}
+
+.ticket-info__meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.ticket-info__meta dt {
+  color: var(--color-text-muted);
+}
+
+.ticket-info__meta dd {
+  margin: 0;
+}
+
+.seccion {
+  margin-bottom: 1.5rem;
+}
+
+.seccion h2 {
+  font-size: 1rem;
+  margin-top: 0;
+}
+
+.transiciones {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.confirmacion-transicion {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.texto-muted {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.lista-comentarios,
+.lista-historial {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.lista-comentarios li {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lista-comentarios li p {
+  margin: 0.35rem 0 0;
+}
+
+.lista-comentarios__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lista-historial li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  font-size: 0.9rem;
+}

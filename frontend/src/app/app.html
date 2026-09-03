@@ -1,0 +1,23 @@
+<header class="topbar">
+  <a routerLink="/" class="topbar__titulo">Mesa de ayuda</a>
+
+  <label class="topbar__usuario">
+    Actuando como:
+    @if (usuarioActual.usuarios().length > 0) {
+      <select
+        [ngModel]="usuarioActual.usuarioActualId()"
+        (ngModelChange)="onCambiarUsuario($event)"
+      >
+        @for (usuario of usuarioActual.usuarios(); track usuario.id) {
+          <option [value]="usuario.id">{{ usuario.nombre }} ({{ usuario.rol }})</option>
+        }
+      </select>
+    } @else {
+      <span>cargando usuarios...</span>
+    }
+  </label>
+</header>
+
+<main class="contenido">
+  <router-outlet />
+</main>

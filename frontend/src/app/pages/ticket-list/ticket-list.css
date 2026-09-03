@@ -1,0 +1,66 @@
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.filtros {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.formulario-crear {
+  margin-bottom: 1.5rem;
+}
+
+.formulario-crear textarea {
+  resize: vertical;
+}
+
+.formulario-crear__fila {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.formulario-crear__fila .campo {
+  flex: 1;
+  min-width: 160px;
+}
+
+.tabla-tickets {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tabla-tickets th,
+.tabla-tickets td {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.9rem;
+}
+
+.tabla-tickets tbody tr {
+  cursor: pointer;
+}
+
+.tabla-tickets tbody tr:hover {
+  background: var(--color-bg);
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}

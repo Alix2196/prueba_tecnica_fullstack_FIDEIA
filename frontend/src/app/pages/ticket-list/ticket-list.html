@@ -1,0 +1,119 @@
+<div class="cabecera">
+  <h1>Tickets</h1>
+  <button class="boton boton--primario" (click)="toggleFormularioCrear()">
+    {{ mostrarFormularioCrear() ? 'Cancelar' : '+ Nuevo ticket' }}
+  </button>
+</div>
+
+@if (mostrarFormularioCrear()) {
+  <form class="tarjeta formulario-crear" (ngSubmit)="enviarCrear()">
+    <div class="campo">
+      <label for="titulo">Título</label>
+      <input id="titulo" name="titulo" [(ngModel)]="nuevoTicket.titulo" required maxlength="200" />
+    </div>
+    <div class="campo">
+      <label for="descripcion">Descripción</label>
+      <textarea id="descripcion" name="descripcion" [(ngModel)]="nuevoTicket.descripcion" required rows="3"></textarea>
+    </div>
+    <div class="formulario-crear__fila">
+      <div class="campo">
+        <label for="prioridad">Prioridad</label>
+        <select id="prioridad" name="prioridad" [(ngModel)]="nuevoTicket.prioridad">
+          @for (p of prioridades; track p) {
+            <option [value]="p">{{ p }}</option>
+          }
+        </select>
+      </div>
+      <div class="campo">
+        <label for="solicitante">Solicitante</label>
+        <select id="solicitante" name="solicitanteId" [(ngModel)]="nuevoTicket.solicitanteId" required>
+          @for (u of solicitantes(); track u.id) {
+            <option [value]="u.id">{{ u.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="campo">
+        <label for="agente">Agente (opcional)</label>
+        <select id="agente" name="agenteId" [(ngModel)]="nuevoTicket.agenteId">
+          <option [ngValue]="null">Sin asignar</option>
+          @for (u of agentes(); track u.id) {
+            <option [value]="u.id">{{ u.nombre }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (errorCrear()) {
+      <p class="estado-error">{{ errorCrear() }}</p>
+    }
+
+    <button class="boton boton--primario" type="submit" [disabled]="creando()">
+      {{ creando() ? 'Creando...' : 'Crear ticket' }}
+    </button>
+  </form>
+}
+
+<div class="filtros">
+  <div class="campo">
+    <label for="filtroEstado">Estado</label>
+    <select id="filtroEstado" [(ngModel)]="filtroEstado" (ngModelChange)="onCambiarFiltro()">
+      <option value="">Todos</option>
+      @for (e of estados; track e) {
+        <option [value]="e">{{ e }}</option>
+      }
+    </select>
+  </div>
+  <div class="campo">
+    <label for="filtroPrioridad">Prioridad</label>
+    <select id="filtroPrioridad" [(ngModel)]="filtroPrioridad" (ngModelChange)="onCambiarFiltro()">
+      <option value="">Todas</option>
+      @for (p of prioridades; track p) {
+        <option [value]="p">{{ p }}</option>
+      }
+    </select>
+  </div>
+</div>
+
+@if (cargando()) {
+  <p class="estado-carga">Cargando tickets...</p>
+} @else if (error()) {
+  <div class="estado-error">
+    <span>{{ error() }}</span>
+    <button class="boton" (click)="cargar()">Reintentar</button>
+  </div>
+} @else if (datos() && datos()!.contenido.length === 0) {
+  <p class="estado-vacio">No hay tickets que coincidan con los filtros seleccionados.</p>
+} @else if (datos()) {
+  <table class="tabla-tickets">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Título</th>
+        <th>Prioridad</th>
+        <th>Estado</th>
+        <th>Solicitante</th>
+        <th>Agente</th>
+        <th>Creado</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (t of datos()!.contenido; track t.id) {
+        <tr (click)="abrirTicket(t.id)">
+          <td>{{ t.id }}</td>
+          <td>{{ t.titulo }}</td>
+          <td><span [class]="claseBadgePrioridad(t.prioridad)">{{ t.prioridad }}</span></td>
+          <td><span [class]="claseBadgeEstado(t.estado)">{{ t.estado }}</span></td>
+          <td>{{ t.solicitante.nombre }}</td>
+          <td>{{ t.agente?.nombre ?? 'Sin asignar' }}</td>
+          <td>{{ formatFecha(t.fechaCreacion) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <div class="paginacion">
+    <button class="boton" [disabled]="pagina() === 0" (click)="irAPagina(pagina() - 1)">« Anterior</button>
+    <span>Página {{ datos()!.pagina + 1 }} de {{ datos()!.totalPaginas || 1 }} — {{ datos()!.totalElementos }} tickets</span>
+    <button class="boton" [disabled]="pagina() + 1 >= datos()!.totalPaginas" (click)="irAPagina(pagina() + 1)">Siguiente »</button>
+  </div>
+}
