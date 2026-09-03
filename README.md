@@ -110,3 +110,58 @@ _Esta sección se ampliará durante la implementación, detallando qué partes d
 - [ ] ENSAYO.md (Parte B).
 
 **Plazo de entrega:** jueves 3 de septiembre de 2026, 12:00 m (hora Colombia), a `luis.espitia@fideia.ai`.
+
+## 14. Apéndice — Modelo extendido de referencia (fuera del alcance de esta prueba)
+
+> Esta sección documenta cómo se vería un sistema de mesa de ayuda completo (estilo Zendesk/Freshdesk), a modo de referencia para justificar decisiones de diseño y para la sección "qué quedó pendiente" (10). **No es el alcance a construir**: varios elementos aquí descritos (adjuntos, notificaciones, reportes gráficos, portal de cliente, autenticación/roles reales, SLAs) están explícitamente excluidos por la sección 12 (Fuera de alcance) del enunciado. El MVP de esta prueba se limita a las secciones 4–6 de este README.
+
+### 14.1 Modelo de datos extendido
+
+El núcleo de un sistema completo sigue siendo la entidad **Ticket**, pero con más campos y entidades relacionadas de las que exige esta prueba:
+
+- **Ticket**: id, título, descripción, estado (`open` / `pending` / `on_hold` / `resolved` / `closed` / `reopened`), prioridad (`low` / `medium` / `high` / `urgent`), categoría/tipo, canal de origen (email, web, chat, API), solicitante, agente asignado, equipo, etiquetas, fechas (creación, actualización, vencimiento de SLA) y campos personalizados.
+- **Comentarios**: separando respuestas públicas de notas internas (visibles solo para agentes).
+- **Adjuntos**: archivos asociados a un ticket o comentario.
+- **Historial de estado / Log de auditoría**: quién cambió qué y cuándo — imprescindible para trazabilidad (equivalente al "Historial de estado" de la sección 4 de este README, pero aquí ampliado a auditoría general, no solo de estado).
+- **Usuarios**: con roles (cliente, agente, admin).
+- **Equipos**: agrupación de agentes.
+- **Políticas de SLA**: tiempos de primera respuesta y de resolución según prioridad.
+- **Categorías/Etiquetas**.
+- **Macros / respuestas predefinidas**: para agilizar el trabajo de los agentes.
+
+**Punto clave de arquitectura** (este sí aplica directamente a esta prueba, ver sección 5): el estado del ticket se modela como una **máquina de estados explícita** —no como un campo de texto libre— con transiciones válidas definidas (por ejemplo, no se puede pasar de `closed` a `in_progress` sin pasar antes por `reopened`). Esto evita inconsistencias y facilita los reportes.
+
+### 14.2 Vistas recomendadas (frontend extendido)
+
+- **Dashboard/inicio**: KPIs como tickets abiertos, SLA en riesgo, tiempo promedio de resolución, tickets por agente/equipo.
+- **Bandejas de tickets**: listas filtrables — "mis tickets", "sin asignar", "por equipo", "por prioridad", "vencidos" — con filtros combinables y ordenamiento.
+- **Detalle de ticket**: hilo de conversación, notas internas, historial de cambios, panel lateral con metadatos editables (prioridad, asignación, etiquetas).
+- **Formulario de creación**: tanto para agentes como para un portal de autoservicio del cliente.
+- **Portal de cliente** (opcional pero recomendable): seguimiento de sus propios tickets, base de conocimiento/FAQ para reducir volumen de tickets repetitivos.
+- **Administración**: gestión de usuarios, equipos, categorías, SLAs, macros, reglas de automatización (ej. asignación automática, escalamiento).
+- **Reportes/analítica**: tendencias, cumplimiento de SLA, satisfacción del cliente (CSAT).
+
+*(Las dos vistas exigidas por esta prueba — listado y detalle de ticket, sección 6 de este README — son un subconjunto mínimo de "Bandejas de tickets" y "Detalle de ticket".)*
+
+### 14.3 Diseño de API REST extendido
+
+Estructura típica versionada (`/api/v1/...`):
+
+- `POST /auth/login`, `POST /auth/refresh` — autenticación (JWT/OAuth2).
+- `GET /tickets` (con filtros por query params: `status`, `priority`, `assignee`, `team`, `tags`, paginación) / `POST /tickets`.
+- `GET /tickets/{id}` / `PATCH /tickets/{id}` / `DELETE /tickets/{id}`.
+- `POST /tickets/{id}/comments` / `GET /tickets/{id}/comments`.
+- `POST /tickets/{id}/attachments`.
+- `PATCH /tickets/{id}/status` — transición controlada de estado (equivalente al endpoint "Cambiar estado" de la sección 6).
+- `PATCH /tickets/{id}/assign`.
+- `GET`/`POST /users`, `/teams`, `/categories`, `/tags`, `/sla-policies`.
+- `GET /reports/...` para analítica.
+- **Webhooks salientes** (`ticket.created`, `ticket.updated`, `ticket.resolved`) para integraciones.
+
+**Buenas prácticas generales** (algunas aplicables al MVP, otras solo relevantes a escala):
+
+- Paginación por cursor para listas grandes (el MVP usa paginación simple por página/tamaño, suficiente para el alcance actual).
+- Filtrado/ordenamiento vía query params (sí aplica al MVP: filtros por estado y prioridad en `GET /tickets`).
+- Idempotency keys en creación de tickets, para evitar duplicados por reintentos.
+- Rate limiting.
+- RBAC bien definido (cliente solo ve sus tickets, agente ve los de su equipo, admin ve todo) — fuera de alcance en el MVP, que solo selecciona el usuario actual de una lista (sección 8, supuesto de autenticación).

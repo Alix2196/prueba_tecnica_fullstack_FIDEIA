@@ -6,7 +6,7 @@
 
 _¿Cómo usarías Claude Code para entender un sistema que no conoces (la API documental de ~40.000 líneas)? Sé concreto: qué le pedirías, en qué orden, y qué harías con lo que responde._
 
-Hice la lectura de la prueba analice el comienza y las tecnologias ha implear y como lo iba a hacer luego se creo el repositorio en el Git luego se clona el repositorio se abre el archivo con viasual estudio code se suben cambios y se crea la documentacion inicial donde se toma la desicion de las herramientas tecnologias a implementar, como son para base de datos posgrest porque es opensource y no tiene interferencias con la conexion a la IA, Backend con java spring boot porque es interprice y es un framework robusto por la parte del frontend elegi angular por que estoy mas familiarizada con esta tecnologia me parece mas organizada ella tambien es interprice
+Hice la lectura de la prueba analice el comienza y las tecnologias ha implear y como lo iba a hacer luego se creo el repositorio en el Git luego se clona el repositorio se abre el archivo con viasual estudio code se suben cambios y se crea la documentacion inicial donde se toma la desicion de las herramientas tecnologias a implementar, como son para base de datos posgrest porque es opensource y no tiene interferencias con la conexion a la IA, Backend con java spring boot porque es interprice y es un framework robusto por la parte del frontend elegi angular por que estoy mas familiarizada con esta tecnologia me parece mas organizada ella tambien es interprice, mejore la documentacion que tenia inicalmente basandome en investigaciones
 
 ## 2. Preparación del contexto
 
@@ -27,3 +27,5 @@ _Un caso propio donde un asistente de IA te ahorró trabajo de verdad, y otro do
 ## 6. Esta misma prueba
 
 _Cómo usaste (o no) Claude en la Parte A: qué le pediste, qué corregiste de lo que te entregó y qué escribiste por tu cuenta._
+
+Se realizo la investigacion y la mejora en la documentacion sobre el sistema de tickets en el cual se implemento el diseño de las Apis, las vistas del frontend y el modelo de datos 
