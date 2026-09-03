@@ -4,6 +4,8 @@ import ai.fideia.tickets.dto.ErrorResponse;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -50,6 +52,25 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of("VALIDACION", mensaje));
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleCuerpoIlegible(HttpMessageNotReadableException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of("VALIDACION", "El cuerpo de la peticion es invalido o esta mal formado"));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMetodoNoSoportado(HttpRequestMethodNotSupportedException ex) {
+        String mensaje = "El metodo %s no esta soportado en este recurso".formatted(ex.getMethod());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(ErrorResponse.of("METODO_NO_SOPORTADO", mensaje));
+    }
+
+    /**
+     * Ultima red de seguridad: cualquier excepcion no anticipada por los
+     * handlers anteriores (mas especificos, y por lo tanto con prioridad de
+     * resolucion sobre este) cae aqui como 500 en vez de filtrarse sin
+     * formato al cliente.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenerico(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
