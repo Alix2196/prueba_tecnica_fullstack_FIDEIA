@@ -29,15 +29,18 @@ README.md   Este archivo
 Requisitos: JDK 25 y PostgreSQL 14+ corriendo con el esquema de `db/schema.sql` aplicado. No hace falta tener Maven instalado: el proyecto incluye Maven Wrapper.
 
 ```bash
-# 1. Crear la base de datos y aplicar el esquema
+# 1. Crear la base de datos, aplicar el esquema y cargar datos de prueba
 psql -U postgres -c "CREATE DATABASE tickets;"
 psql -U postgres -d tickets -f db/schema.sql
+psql -U postgres -d tickets -f db/seed.sql   # opcional: 18 tickets de ejemplo
 
 # 2. Levantar la API (por defecto en http://localhost:8080)
 cd backend
 ./mvnw spring-boot:run        # Linux/macOS
 mvnw.cmd spring-boot:run      # Windows
 ```
+
+`db/reporte.sql` es independiente de la app: se corre directo con `psql` (o cualquier cliente SQL) sobre la base ya poblada para ver el reporte de la sección 3.5.
 
 Los valores por defecto (base `tickets`, usuario `tickets`, password `tickets` en `localhost:5432`) alcanzan para levantar el proyecto sin configuración adicional si el paso 1 se hizo con esas credenciales. Para otros valores, Spring Boot lee las variables directamente del entorno del sistema operativo (no hay archivo `.env`: eso no es un mecanismo nativo de Spring Boot/Java). Por ejemplo:
 
@@ -156,7 +159,7 @@ _Esta sección se ampliará durante la implementación, detallando qué partes d
 
 - [ ] Repositorio Git con historial de commits descriptivos.
 - [ ] README.md (este archivo).
-- [ ] Scripts SQL: DDL, datos de prueba (≥15 tickets) y consulta de reporte.
+- [x] Scripts SQL: DDL (`db/schema.sql`), datos de prueba (`db/seed.sql`, 18 tickets) y consulta de reporte (`db/reporte.sql`).
 - [ ] Código fuente: backend, frontend y al menos dos pruebas automatizadas sobre la máquina de estados.
 - [ ] ENSAYO.md (Parte B).
 
