@@ -17,7 +17,7 @@ Núcleo mínimo de una mesa de ayuda interna: gestión del ciclo de vida de tick
 ```
 /backend    Spring Boot — API REST, lógica de negocio, pruebas
 /frontend   Angular — listado y detalle de tickets
-/db         Scripts DDL, datos de prueba (seed) y consulta de reporte
+/db         Scripts DDL (schema.sql), datos de prueba (seed) y consulta de reporte
 ENSAYO.md   Parte B — ensayo sobre uso de Claude Code
 README.md   Este archivo
 ```
@@ -52,7 +52,9 @@ Restricciones:
 - Toda transición se registra en el historial de forma inmutable.
 - La reapertura (`RESUELTO` → `EN_PROCESO`) solo es válida si el ticket pasó a `RESUELTO` hace menos de 3 días.
 
-> Cómo se garantiza la consistencia entre cambio de estado, comentario e historial (transaccionalidad, etc.): _pendiente de documentar durante la implementación._
+**Consistencia entre estado, comentario e historial:** el cambio de estado se maneja en el backend dentro de una única transacción de base de datos que (1) valida la transición contra la máquina de estados, (2) si aplica, inserta el comentario de solución, (3) actualiza `ticket.estado` (y `ticket.fecha_resolucion` si el nuevo estado es `RESUELTO`), y (4) inserta el registro en `historial_estado`. Si cualquier paso falla, la transacción hace rollback completo — no queda estado a medias.
+
+Como segunda línea de defensa, el esquema (`db/schema.sql`) refuerza a nivel de base de datos las invariantes que no deben violarse aunque exista un bug en el backend: el historial es inmutable (trigger que bloquea `UPDATE`/`DELETE`), no se pueden agregar comentarios a un ticket `CERRADO`, y `solicitante_id`/`agente_id` deben corresponder a usuarios con el rol correcto. La regla de reapertura (RESUELTO hace menos de 3 días) se valida en el backend comparando `now()` contra `ticket.fecha_resolucion`.
 
 ## 6. API REST (endpoints mínimos)
 
@@ -68,7 +70,12 @@ Formato de error: pendiente (código, mensaje entendible, status HTTP correcto p
 
 ## 7. Decisiones de diseño
 
-_Pendiente — se documentará aquí cada decisión relevante (p. ej. cómo se garantiza la atomicidad de la transición de estado, estrategia de validación, manejo de errores) a medida que se tomen durante la implementación._
+- **Enums nativos de PostgreSQL** para `prioridad`, `estado` de ticket y `rol` de usuario, en vez de `VARCHAR` + `CHECK`: el motor rechaza valores fuera del dominio sin validación adicional y el esquema documenta el dominio de valores directamente.
+- **Catálogo `usuario` único con columna `rol`** (`SOLICITANTE` / `AGENTE`) en vez de dos tablas separadas: el enunciado no exige comportamientos distintos entre ambos roles más allá de a qué campo del ticket pueden asociarse, así que una tabla con un enum evita duplicar estructura.
+- **`ticket.fecha_resolucion`** como columna dedicada (en vez de derivarla con una subconsulta al historial en cada request) para que la regla de reapertura (RESUELTO hace menos de 3 días) sea una comparación directa e indexable.
+- **`comentario.es_solucion`** para distinguir el comentario obligatorio de solución del resto de comentarios normales en la vista de detalle.
+- **Restricciones de negocio duplicadas en dos capas** (backend + triggers de base de datos) para la inmutabilidad del historial, el bloqueo de comentarios en tickets `CERRADO` y la integridad de roles: el backend es la fuente de verdad y responde con el error HTTP correcto, pero la base de datos no depende únicamente de que el backend se comporte bien (ver sección 5 y `db/schema.sql`).
+- **Manejo de errores**: pendiente de documentar el formato exacto de respuesta de error una vez implementado el backend.
 
 ## 8. Supuestos asumidos
 
@@ -82,7 +89,16 @@ _(Se irán agregando aquí los supuestos adicionales que surjan durante la imple
 
 ## 9. Índices y su justificación
 
-_Pendiente — se documentará cada índice creado y qué consulta busca acelerar, una vez definido el DDL final._
+Definidos en `db/schema.sql`:
+
+| Índice | Tabla / columnas | Qué consulta acelera |
+|---|---|---|
+| `idx_ticket_estado_prioridad` | `ticket (estado, prioridad)` | `GET /tickets` filtrando por estado solo, o por estado + prioridad combinados (el prefijo `estado` cubre ambos casos). |
+| `idx_ticket_prioridad` | `ticket (prioridad)` | `GET /tickets` filtrando solo por prioridad (no cubierto por el índice compuesto, cuyo primer campo es `estado`). |
+| `idx_ticket_agente_estado` | `ticket (agente_id, estado)` | La consulta de reporte de la sección 3.5: agrupa por agente los tickets no cerrados. |
+| `idx_ticket_fecha_creacion` | `ticket (fecha_creacion DESC)` | Orden por defecto del listado (más recientes primero) combinado con paginación. |
+| `idx_comentario_ticket_id` | `comentario (ticket_id)` | Cargar los comentarios de un ticket en la vista de detalle. |
+| `idx_historial_ticket_id` | `historial_estado (ticket_id)` | Cargar el historial de estados de un ticket en la vista de detalle. |
 
 ## 10. Qué quedó pendiente
 
