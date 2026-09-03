@@ -1,0 +1,581 @@
+{
+  "info": {
+    "_postman_id": "f1d31a00-1111-4a9e-9b3a-tickets-fideia",
+    "name": "Mesa de ayuda — Sistema de tickets (FIDEIA)",
+    "description": "Colección para probar la API REST del backend (README secciones 6 y 5). Requiere el backend corriendo en {{baseUrl}} con el esquema y el seed de datos aplicados (db/schema.sql + db/seed.sql): los ids de usuario y ticket usados aquí como ejemplo vienen de ese seed (usuario 1 = Laura Gómez, SOLICITANTE; usuario 7 = Elena Vargas, AGENTE). El flujo de la carpeta 'Ciclo de vida completo' crea su propio ticket, así que no depende de que el seed siga intacto.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api" },
+    { "key": "ticketId", "value": "" },
+    { "key": "solicitanteId", "value": "1" },
+    { "key": "agenteId", "value": "7" }
+  ],
+  "item": [
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "Listar todos los usuarios",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/usuarios", "host": ["{{baseUrl}}"], "path": ["usuarios"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('devuelve un arreglo no vacio', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.be.an('array');",
+                  "  pm.expect(body.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar solo agentes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/usuarios?rol=AGENTE",
+              "host": ["{{baseUrl}}"],
+              "path": ["usuarios"],
+              "query": [{ "key": "rol", "value": "AGENTE" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('todos tienen rol AGENTE', () => {",
+                  "  const body = pm.response.json();",
+                  "  body.forEach((u) => pm.expect(u.rol).to.eql('AGENTE'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tickets — Listado y detalle",
+      "item": [
+        {
+          "name": "Listar tickets (paginado, sin filtros)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tickets?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('trae totalElementos y contenido paginado', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('totalElementos');",
+                  "  pm.expect(body).to.have.property('contenido');",
+                  "  pm.expect(body.contenido.length).to.be.at.most(10);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar tickets filtrando por estado",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tickets?estado=ABIERTO",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets"],
+              "query": [{ "key": "estado", "value": "ABIERTO" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('todos los tickets devueltos estan ABIERTO', () => {",
+                  "  const body = pm.response.json();",
+                  "  body.contenido.forEach((t) => pm.expect(t.estado).to.eql('ABIERTO'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar tickets filtrando por estado + prioridad",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tickets?estado=EN_PROCESO&prioridad=ALTA",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets"],
+              "query": [
+                { "key": "estado", "value": "EN_PROCESO" },
+                { "key": "prioridad", "value": "ALTA" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] }
+            }
+          ]
+        },
+        {
+          "name": "Consultar detalle de un ticket",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/tickets/1", "host": ["{{baseUrl}}"], "path": ["tickets", "1"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('trae ticket, comentarios e historial', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.all.keys('ticket', 'comentarios', 'historial');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar ticket inexistente (404)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/tickets/999999", "host": ["{{baseUrl}}"], "path": ["tickets", "999999"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('codigo RECURSO_NO_ENCONTRADO', () => {",
+                  "  pm.expect(pm.response.json().codigo).to.eql('RECURSO_NO_ENCONTRADO');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tickets — Ciclo de vida completo (flujo)",
+      "description": "Ejecutar en orden (Postman Runner o uno por uno): crea un ticket propio y lo lleva por toda la maquina de estados de la seccion 5 del README, incluyendo los casos que el backend debe rechazar.",
+      "item": [
+        {
+          "name": "1. Crear ticket",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/tickets", "host": ["{{baseUrl}}"], "path": ["tickets"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"[Postman] Ticket de prueba\",\n  \"descripcion\": \"Creado desde la coleccion de Postman para probar el flujo completo.\",\n  \"prioridad\": \"MEDIA\",\n  \"solicitanteId\": {{solicitanteId}},\n  \"agenteId\": {{agenteId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('nace en estado ABIERTO', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.estado).to.eql('ABIERTO');",
+                  "  pm.collectionVariables.set('ticketId', body.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Cambiar estado: ABIERTO -> EN_PROCESO (válida)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/{{ticketId}}/estado",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "{{ticketId}}", "estado"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estadoNuevo\": \"EN_PROCESO\",\n  \"autorId\": {{agenteId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('estado actualizado a EN_PROCESO', () => {",
+                  "  pm.expect(pm.response.json().estado).to.eql('EN_PROCESO');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Cambiar estado: EN_PROCESO -> CERRADO (inválida, 409 esperado)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/{{ticketId}}/estado",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "{{ticketId}}", "estado"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estadoNuevo\": \"CERRADO\",\n  \"autorId\": {{agenteId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('codigo TRANSICION_INVALIDA', () => {",
+                  "  pm.expect(pm.response.json().codigo).to.eql('TRANSICION_INVALIDA');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Cambiar estado: EN_PROCESO -> RESUELTO sin comentario (422 esperado)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/{{ticketId}}/estado",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "{{ticketId}}", "estado"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estadoNuevo\": \"RESUELTO\",\n  \"autorId\": {{agenteId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('codigo REGLA_NEGOCIO', () => {",
+                  "  pm.expect(pm.response.json().codigo).to.eql('REGLA_NEGOCIO');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Cambiar estado: EN_PROCESO -> RESUELTO con comentario (válida)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/{{ticketId}}/estado",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "{{ticketId}}", "estado"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estadoNuevo\": \"RESUELTO\",\n  \"autorId\": {{agenteId}},\n  \"comentario\": \"Se soluciono el inconveniente desde la prueba de Postman.\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('estado RESUELTO y fechaResolucion presente', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.estado).to.eql('RESUELTO');",
+                  "  pm.expect(body.fechaResolucion).to.not.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Agregar comentario normal",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/{{ticketId}}/comentarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "{{ticketId}}", "comentarios"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"autorId\": {{solicitanteId}},\n  \"texto\": \"Gracias por la ayuda!\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('esSolucion es false', () => {",
+                  "  pm.expect(pm.response.json().esSolucion).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Cambiar estado: RESUELTO -> CERRADO (válida)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/{{ticketId}}/estado",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "{{ticketId}}", "estado"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estadoNuevo\": \"CERRADO\",\n  \"autorId\": {{agenteId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('estado CERRADO', () => {",
+                  "  pm.expect(pm.response.json().estado).to.eql('CERRADO');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. Agregar comentario sobre ticket CERRADO (422 esperado)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/tickets/{{ticketId}}/comentarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "{{ticketId}}", "comentarios"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"autorId\": {{solicitanteId}},\n  \"texto\": \"Este comentario deberia ser rechazado.\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('codigo REGLA_NEGOCIO', () => {",
+                  "  pm.expect(pm.response.json().codigo).to.eql('REGLA_NEGOCIO');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. Ver detalle final del ticket creado",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tickets/{{ticketId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "{{ticketId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('historial tiene las 4 transiciones (creacion + 3 cambios)', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.historial.length).to.eql(4);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Casos de error",
+      "item": [
+        {
+          "name": "Crear ticket con campos faltantes (400 esperado)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/tickets", "host": ["{{baseUrl}}"], "path": ["tickets"] },
+            "body": { "mode": "raw", "raw": "{\n  \"descripcion\": \"Falta el titulo y la prioridad\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('codigo VALIDACION con detalles', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.codigo).to.eql('VALIDACION');",
+                  "  pm.expect(body.detalles.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear ticket con solicitante inexistente (404 esperado)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/tickets", "host": ["{{baseUrl}}"], "path": ["tickets"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Prueba\",\n  \"descripcion\": \"Prueba\",\n  \"prioridad\": \"BAJA\",\n  \"solicitanteId\": 999999\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"] }
+            }
+          ]
+        },
+        {
+          "name": "Crear ticket con solicitanteId de un usuario AGENTE (422 esperado)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/tickets", "host": ["{{baseUrl}}"], "path": ["tickets"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Prueba de rol incorrecto\",\n  \"descripcion\": \"El id {{agenteId}} es un AGENTE, no un SOLICITANTE.\",\n  \"prioridad\": \"BAJA\",\n  \"solicitanteId\": {{agenteId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('codigo REGLA_NEGOCIO', () => {",
+                  "  pm.expect(pm.response.json().codigo).to.eql('REGLA_NEGOCIO');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar tickets con estado inválido (400 esperado)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tickets?estado=NO_EXISTE",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets"],
+              "query": [{ "key": "estado", "value": "NO_EXISTE" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"] }
+            }
+          ]
+        },
+        {
+          "name": "Método HTTP no soportado sobre un ticket (405 esperado)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/tickets/1", "host": ["{{baseUrl}}"], "path": ["tickets", "1"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('405 Method Not Allowed', () => pm.response.to.have.status(405));",
+                  "pm.test('codigo METODO_NO_SOPORTADO', () => {",
+                  "  pm.expect(pm.response.json().codigo).to.eql('METODO_NO_SOPORTADO');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Body JSON malformado (400 esperado)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/tickets", "host": ["{{baseUrl}}"], "path": ["tickets"] },
+            "body": { "mode": "raw", "raw": "{ esto no es json valido" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"] }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

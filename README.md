@@ -20,6 +20,7 @@ Versiones usadas: **Java 25** (JDK Eclipse Temurin), **Spring Boot 3.5.13** sobr
 /backend    Spring Boot — API REST, lógica de negocio, pruebas
 /frontend   Angular — listado y detalle de tickets
 /db         Scripts DDL (schema.sql), datos de prueba (seed) y consulta de reporte
+/postman    Colección de Postman (api.json) para probar la API manualmente
 ENSAYO.md   Parte B — ensayo sobre uso de Claude Code
 README.md   Este archivo
 ```
@@ -64,7 +65,15 @@ El backend usa `spring.jpa.hibernate.ddl-auto=validate`: nunca modifica el esque
 
 ### 3.2 Frontend
 
-_Pendiente — se documentará una vez implementado el proyecto Angular en `/frontend`._
+Requiere Node 20+ (probado con Node 24) y el backend corriendo en `http://localhost:8080` (la URL está fija en `frontend/src/app/core/services/api-config.ts`; no hay build de producción en el alcance de esta prueba, ver sección 12).
+
+```bash
+cd frontend
+npm install
+npm start          # http://localhost:4200
+```
+
+No hay autenticación: la barra superior tiene un selector "Actuando como" con el catálogo de usuarios (`GET /api/usuarios`, ver sección 6), y ese usuario se usa como autor al comentar o cambiar el estado de un ticket (README sección 8).
 
 ## 4. Modelo de dominio
 
@@ -98,7 +107,7 @@ Como segunda línea de defensa, el esquema (`db/schema.sql`) refuerza a nivel de
 
 ## 6. API REST (endpoints mínimos)
 
-Base path: `/api/tickets`.
+Base path: `/api`.
 
 | Operación | Método y ruta | Notas |
 |---|---|---|
@@ -107,6 +116,7 @@ Base path: `/api/tickets`.
 | Consultar ticket | `GET /api/tickets/{id}` | Detalle con comentarios e historial de estados. |
 | Cambiar estado | `PATCH /api/tickets/{id}/estado` | Body: `{ estadoNuevo, autorId, comentario? }`. Aplica la máquina de estados de la sección 5; `comentario` es obligatorio solo si `estadoNuevo` es `RESUELTO`. |
 | Agregar comentario | `POST /api/tickets/{id}/comentarios` | Body: `{ autorId, texto }`. Rechazado si el ticket está `CERRADO`. |
+| Listar usuarios | `GET /api/usuarios?rol=` | No exigido por el enunciado; se agregó de solo lectura para poblar el selector de "usuario actual" y los formularios del frontend (catálogo precargado, sin gestión — ver sección 8). |
 
 Formato de error, uniforme en toda la API (`ai.fideia.tickets.dto.ErrorResponse` / `GlobalExceptionHandler`):
 
@@ -160,11 +170,11 @@ Definidos en `db/schema.sql`:
 
 ## 10. Qué quedó pendiente
 
-Completado, en el orden sugerido por el enunciado: (1) máquina de estados e historial, (2) esquema de BD y consulta de reporte, (3) endpoints de listado/detalle (y el resto de la API), (4) README. Queda pendiente:
+Completado, en el orden sugerido por el enunciado: (1) máquina de estados e historial, (2) esquema de BD y consulta de reporte, (3) endpoints de listado/detalle (y el resto de la API), (4) README, (5) frontend Angular (listado con filtros/paginación server-side y detalle con comentarios, historial y cambio de estado). Queda pendiente:
 
-- **(5) Frontend Angular**: listado de tickets con filtros/paginación server-side y vista de detalle (comentarios, historial, cambio de estado).
 - **Locking optimista** (`@Version` en `Ticket`): dos cambios de estado concurrentes sobre el mismo ticket no están cubiertos; el enunciado no lo exige para esta prueba, pero en un sistema real con varios agentes trabajando a la vez valdría la pena.
 - **Rate limiting / paginación por cursor**: mencionados en el apéndice (sección 14) como buenas prácticas a mayor escala; la paginación simple por página/tamaño alcanza para el volumen de este ejercicio.
+- **Formulario de creación de ticket**: el enunciado (sección 3.6) solo exige dos vistas (listado y detalle); se agregó igual un formulario mínimo embebido en el listado para poder probar `POST /api/tickets` desde la UI, sin invertir tiempo en una vista dedicada.
 
 ## 11. Uso de IA
 
@@ -184,7 +194,7 @@ _Esta sección se ampliará durante la implementación, detallando qué partes d
 - [ ] Repositorio Git con historial de commits descriptivos.
 - [ ] README.md (este archivo).
 - [x] Scripts SQL: DDL (`db/schema.sql`), datos de prueba (`db/seed.sql`, 18 tickets) y consulta de reporte (`db/reporte.sql`).
-- [ ] Código fuente: backend, frontend y al menos dos pruebas automatizadas sobre la máquina de estados.
+- [x] Código fuente: backend (`/backend`), frontend (`/frontend`) y 5 pruebas automatizadas sobre la máquina de estados (`TicketEstadoMachineTest`, ≥2 exigidas).
 - [ ] ENSAYO.md (Parte B).
 
 **Plazo de entrega:** jueves 3 de septiembre de 2026, 12:00 m (hora Colombia), a `luis.espitia@fideia.ai`.
