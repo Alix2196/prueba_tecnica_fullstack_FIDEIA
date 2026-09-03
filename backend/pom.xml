@@ -7,7 +7,10 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
+        <!-- 3.2.5 (Spring Framework 6.1.6) no puede correr en JDK 25: su ASM interno
+             para el escaneo de componentes no reconoce class files major version 69.
+             3.5.x trae Spring Framework 6.2.x, que si lo soporta. -->
+        <version>3.5.13</version>
         <relativePath/>
     </parent>
 
@@ -19,6 +22,9 @@
 
     <properties>
         <java.version>25</java.version>
+        <!-- La version de Lombok que trae spring-boot-starter-parent 3.2.5 (1.18.30)
+             es anterior a JDK 25 y no soporta su compilador; se sube explicitamente. -->
+        <lombok.version>1.18.44</lombok.version>
     </properties>
 
     <dependencies>
@@ -57,9 +63,29 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- Declaracion explicita del procesador de anotaciones de Lombok:
+                         con JDK 25 la deteccion automatica desde el classpath de
+                         compilacion no lo activa. -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <!-- Evita que el plugin busque la clase main escaneando bytecode con
+                         ASM: esa version de ASM (embebida en spring-boot-loader-tools 3.2.5)
+                         no reconoce el major version 69 (JDK 25) y falla al escanear. -->
+                    <mainClass>ai.fideia.tickets.TicketsBackendApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
